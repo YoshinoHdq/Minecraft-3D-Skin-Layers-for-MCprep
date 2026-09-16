@@ -22,7 +22,16 @@
 - 支持 **生成 / 重建 / 删除** 3D 外层
 - 支持带透明区域的皮肤
 - 支持同一场景中的多个玩家模型，各自独立处理
+- 支持在姿态模式下调整角色姿态，3D 外层会随对应身体部位保持关联，正常姿态调整不会破坏外层结构
 - **非破坏性**：不修改 MCprep 原有的 Layer1 / Layer2、骨架、材质与皮肤图片
+
+<p align="center">
+  <img src="docs/images/player_3d_layers_demo.png" alt="Minecraft 3D Skin Layers pose mode example" width="700">
+</p>
+
+<p align="center">
+  <em>在姿态模式下调整角色姿态时，3D 外层保持与对应身体部位的关联。</em>
+</p>
 
 ---
 

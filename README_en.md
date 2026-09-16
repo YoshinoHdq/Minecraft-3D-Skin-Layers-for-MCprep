@@ -22,7 +22,16 @@ The outer skin is generated as real voxel-based geometry from the skin texture, 
 - **Generate / Rebuild / Delete** the 3D outer layers
 - Handles skins with transparent regions
 - Handles multiple player models in the same scene, each processed independently
+- **Pose-friendly:** adjust the character in Pose Mode while the 3D outer layers remain associated with their corresponding body parts and preserve their structure during normal posing
 - **Non-destructive**: never modifies MCprep's Layer1 / Layer2, armature, materials or skin images
+
+<p align="center">
+  <img src="docs/images/player_3d_layers_demo.png" alt="Minecraft 3D Skin Layers pose mode example" width="700">
+</p>
+
+<p align="center">
+  <em>3D outer skin layers remain associated with the corresponding body parts during Pose Mode adjustments.</em>
+</p>
 
 ---
 
