@@ -28,8 +28,8 @@ MCprep's own Layer2 mesh.
 
 - Minecraft-style 3D skin layers generated from the skin texture
 - MCprep player model support
-- Classic model support
-- Slim model support (3 px arms detected automatically)
+- Support for the **Simple Player** and **Simple Player Slim** player models from MCprep
+- Simple Player Slim, which has narrower arms, is detected automatically
 - Transparent skin support — transparent texels produce no geometry
 - Automatic player detection from the current selection
 - Head / Body / Arms / Legs control — generate just the parts you need
@@ -86,7 +86,8 @@ the materials and the skin images are never touched.
 
 ## Compatibility
 
-Designed for **MCprep-generated Minecraft player models** (Classic and Slim).
+Designed for **MCprep-generated Minecraft player models** — the **Simple Player** and
+**Simple Player Slim** models.
 
 Only MCprep player models have been tested. Other Minecraft model importers or manually assembled
 blocky models are not supported.

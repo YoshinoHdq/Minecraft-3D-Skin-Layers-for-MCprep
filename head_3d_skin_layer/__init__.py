@@ -70,6 +70,162 @@ import bpy
 import bmesh
 from mathutils import Matrix, Vector
 
+# ---------------------------------------------------------------------------
+# Localization
+# ---------------------------------------------------------------------------
+#
+# One shared core, two language builds.  The only product-level difference
+# between the `_zh` and `_en` packages is the value of `UI_LANGUAGE` below;
+# every other line of code - the voxel/UV/binding algorithm included - is
+# byte-identical between the two.
+#
+# Proper nouns are deliberately NOT translated in either build:
+#   Minecraft, MCprep, Blender, MC 3D Skin Layers,
+#   Simple Player, Simple Player Slim
+#
+# `T()` falls back to English when a key is missing, so a typo can never blank
+# out a label.
+
+#: "zh" or "en" - rewritten when the release ZIP is assembled.
+UI_LANGUAGE = "zh"
+
+#: Translation context for every string this addon draws.
+#:
+#: Blender runs interface strings through its own zh dictionary, which maps
+#: bare words like "Head" -> "头部" and would leak Chinese into the English
+#: build.  Draw calls are therefore made with this private context, so Blender
+#: has no matching entry and shows exactly the string we passed - while the
+#: English source text itself stays a clean "Head".
+UI_CONTEXT = "MC3DSL"
+
+_L10N_EN = {
+    # panel sections
+    "panel.player": "PLAYER",
+    "panel.layers": "3D SKIN LAYERS",
+    "panel.parts": "BODY PARTS",
+    "panel.status": "STATUS",
+    "panel.about": "ABOUT",
+    # body parts (also used as property names)
+    "part.head": "Head",
+    "part.body": "Body",
+    "part.arms": "Arms",
+    "part.legs": "Legs",
+    # buttons / operators
+    "op.generate": "Generate 3D Layers",
+    "op.remove": "Delete 3D Layers",
+    "op.rebuild": "Rebuild 3D Layers",
+    "op.generate.desc": (
+        "Generate a Minecraft-style 3D skin layer for the selected MCprep player"
+    ),
+    "op.remove.desc": (
+        "Delete the 3D skin layers generated for the selected MCprep player"
+    ),
+    "op.rebuild.desc": (
+        "Delete and regenerate the 3D skin layers for the selected MCprep player"
+    ),
+    # model kinds
+    "model.standard": "Simple Player",
+    "model.slim": "Simple Player Slim",
+    "model.unknown": "Unknown model",
+    # player area
+    "player.layer_count": "3D layers: %d / 10",
+    # states
+    "state.idle": "Ready",
+    "state.generated": "✓ 3D layers generated",
+    "state.generated_parts": "✓ Generated %s",
+    "state.rebuilt": "✓ 3D layers rebuilt",
+    "state.removed": "✓ 3D layers deleted",
+    "state.nothing_to_remove": "There are no 3D layers to delete.",
+    "state.already_exists": "3D layers already exist. Use “Rebuild 3D Layers”.",
+    "state.failed": (
+        "⚠ Failed to generate the 3D layers.\n"
+        "Please check that the current model is a valid MCprep player model."
+    ),
+    "state.no_target": "⚠ No MCprep player model detected",
+    # warnings shown in the PLAYER area
+    "warn.no_player": "⚠ No MCprep player model detected",
+    "warn.no_player.hint": "  Select an MCprep player model first.",
+    "warn.no_skin_layer": "⚠ Minecraft skin layer not found",
+    "warn.no_skin_layer.hint": (
+        "  Please make sure this player model was created by MCprep."
+    ),
+    "warn.not_player": "⚠ The current object is not an MCprep player model",
+    "warn.not_player.hint": "  Select a player model created by MCprep.",
+    # error / info reports
+    "report.refuse": "Please select an MCprep player or one of its body parts.",
+    "report.no_player_processed": "No MCprep Minecraft player could be processed.",
+    "report.ready": (
+        "3D skin layers ready: %d new object(s), %d layer group(s) already present."
+    ),
+    "report.removed": "✓ 3D layers deleted (%d)",
+    "report.nothing_to_remove": "There are no 3D layers to delete.",
+}
+
+_L10N_ZH = {
+    "panel.player": "玩家",
+    "panel.layers": "3D 外层皮肤",
+    "panel.parts": "身体部位",
+    "panel.status": "状态",
+    "panel.about": "关于",
+    "part.head": "头部",
+    "part.body": "身体",
+    "part.arms": "手臂",
+    "part.legs": "腿部",
+    "op.generate": "生成 3D 外层",
+    "op.remove": "删除 3D 外层",
+    "op.rebuild": "重建 3D 外层",
+    "op.generate.desc": "为选中的 MCprep 玩家模型生成 Minecraft 风格的 3D 外层皮肤",
+    "op.remove.desc": "删除为选中的 MCprep 玩家模型生成的 3D 外层",
+    "op.rebuild.desc": "删除并重新生成选中 MCprep 玩家模型的 3D 外层",
+    "model.standard": "Simple Player",
+    "model.slim": "Simple Player Slim",
+    "model.unknown": "未知模型",
+    "player.layer_count": "3D 外层: %d / 10",
+    "state.idle": "等待操作",
+    "state.generated": "✓ 3D 外层生成完成",
+    "state.generated_parts": "✓ 已生成 %s",
+    "state.rebuilt": "✓ 3D 外层重建完成",
+    "state.removed": "✓ 3D 外层已删除",
+    "state.nothing_to_remove": "没有可删除的 3D 外层。",
+    "state.already_exists": "3D 外层已存在，请使用“重建 3D 外层”。",
+    "state.failed": (
+        "⚠ 3D 外层生成失败\n请检查当前模型是否为有效的 MCprep 玩家模型。"
+    ),
+    "state.no_target": "⚠ 未检测到 MCprep 玩家模型",
+    "warn.no_player": "⚠ 未检测到 MCprep 玩家模型",
+    "warn.no_player.hint": "  请先选中一个 MCprep 玩家模型。",
+    "warn.no_skin_layer": "⚠ 无法找到 Minecraft Skin Layer",
+    "warn.no_skin_layer.hint": "  请确认该玩家模型由 MCprep 正常生成。",
+    "warn.not_player": "⚠ 当前对象不是 MCprep 玩家模型",
+    "warn.not_player.hint": "  请选择由 MCprep 创建的玩家模型。",
+    "report.refuse": "请选择一个 MCprep Player 或其身体部件。",
+    "report.no_player_processed": "没有可处理的 MCprep 玩家模型。",
+    "report.ready": "3D 外层就绪：新建 %d 个对象，%d 组已存在。",
+    "report.removed": "✓ 3D 外层已删除 (%d)",
+    "report.nothing_to_remove": "没有可删除的 3D 外层。",
+}
+
+TRANSLATIONS = {"en": _L10N_EN, "zh": _L10N_ZH}
+
+
+def T(key, *args):
+    """Translated UI string for *key*, formatted with *args*.
+
+    Falls back to English and then to the key itself, so a missing entry
+    degrades to readable text instead of an empty label.
+    """
+    table = TRANSLATIONS.get(UI_LANGUAGE, _L10N_EN)
+    text = table.get(key)
+    if text is None:
+        text = _L10N_EN.get(key, key)
+    if args:
+        try:
+            return text % args
+        except (TypeError, ValueError):
+            return text
+    return text
+
+
 #: Sidebar tab / panel heading text.
 ADDON_TITLE = "Minecraft 3D Skin Layers for MCprep"
 ADDON_TITLE_SHORT = "Minecraft 3D Skin Layers"
@@ -139,9 +295,6 @@ SIMPLE_RIGS = {
 
 RIG_LAYER2_TAG = ".Body.Layer2"
 RIG_LAYER1_TAG = ".Body.Layer1"
-
-#: Shown whenever the current selection cannot be resolved to a player rig.
-REFUSE_SELECTION_MSG = "请选择一个 MCprep Player 或其身体部件。"
 
 
 def _resolve_target_rig(context, explicit):
@@ -1482,7 +1635,7 @@ class OBJECT_OT_generate_head_3d_skin_layer(bpy.types.Operator):
 
             rig = _resolve_target_rig(context, self.target_rig)
             if rig is None:
-                self.report({"ERROR"}, REFUSE_SELECTION_MSG)
+                self.report({"ERROR"}, T("report.refuse"))
                 return {"CANCELLED"}
 
             src_obj = bpy.data.objects.get(rig.layer2_name)
@@ -1569,7 +1722,7 @@ class OBJECT_OT_generate_legs_3d_skin_layer(bpy.types.Operator):
 
             rig = _resolve_target_rig(context, self.target_rig)
             if rig is None:
-                self.report({"ERROR"}, REFUSE_SELECTION_MSG)
+                self.report({"ERROR"}, T("report.refuse"))
                 return {"CANCELLED"}
 
             src_obj = bpy.data.objects.get(rig.layer2_name)
@@ -1653,7 +1806,7 @@ class OBJECT_OT_generate_arms_3d_skin_layer(bpy.types.Operator):
 
         rig = _resolve_target_rig(context, self.target_rig)
         if rig is None:
-            self.report({"ERROR"}, REFUSE_SELECTION_MSG)
+            self.report({"ERROR"}, T("report.refuse"))
             return {"CANCELLED"}
 
         src_obj = bpy.data.objects.get(rig.layer2_name)
@@ -1730,7 +1883,7 @@ class OBJECT_OT_generate_body_3d_skin_layer(bpy.types.Operator):
 
             rig = _resolve_target_rig(context, self.target_rig)
             if rig is None:
-                self.report({"ERROR"}, REFUSE_SELECTION_MSG)
+                self.report({"ERROR"}, T("report.refuse"))
                 return {"CANCELLED"}
 
             src_obj = bpy.data.objects.get(rig.layer2_name)
@@ -2065,7 +2218,8 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
     selected MCprep Minecraft player"""
 
     bl_idname = "object.generate_skin_layers_3d"
-    bl_label = "Generate 3D Skin Layers"
+    bl_label = T("op.generate")
+    bl_description = T("op.generate.desc")
     bl_options = {"REGISTER", "UNDO"}
 
     target_rig: bpy.props.StringProperty(
@@ -2083,8 +2237,8 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
 
         if rig is None:
             # Refuse rather than guess: no silent fallback to every rig.
-            self.report({"ERROR"}, REFUSE_SELECTION_MSG)
-            _set_status("⚠ 未检测到 MCprep 玩家模型")
+            self.report({"ERROR"}, T("report.refuse"))
+            _set_status("state.no_target")
             return {"CANCELLED"}
 
         existing_before = len(bpy.data.objects)
@@ -2098,7 +2252,7 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
                 {"ERROR"},
                 "%s has no %s" % (rig.rig_name, rig.layer2_name),
             )
-            _set_status("⚠ 无法找到 Minecraft Skin Layer")
+            _set_status("warn.no_skin_layer")
             return {"CANCELLED"}
 
         # Body-part selection comes from the panel checkboxes. A disabled
@@ -2138,7 +2292,7 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
             import traceback
             traceback.print_exc()
             self.report({"ERROR"}, "%s: %s" % (rig.rig_name, exc))
-            _set_status("⚠ 3D 外层生成失败\n请检查当前模型是否为有效的 MCprep 玩家模型。")
+            _set_status("state.failed")
             return {"CANCELLED"}
         finally:
             _restore_selection(context, saved_selection)
@@ -2149,26 +2303,22 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
             self.report({"WARNING"}, "; ".join(problems))
 
         if created == 0 and reused == 0:
-            self.report({"ERROR"}, "No MCprep Minecraft player could be processed.")
-            _set_status("⚠ 3D 外层生成失败\n请检查当前模型是否为有效的 MCprep 玩家模型。")
+            self.report({"ERROR"}, T("report.no_player_processed"))
+            _set_status("state.failed")
             return {"CANCELLED"}
 
         # New objects may have been created, but every selected part already
         # had its layer -> tell the user to use Rebuild instead.
         if created == 0 and made_parts:
-            _set_status("3D 外层已存在，请使用“重建 3D 外层”。")
+            _set_status("state.already_exists")
         elif made_parts and _is_partial(state):
-            _set_status("✓ 已生成 " + " / ".join(made_parts))
+            _set_status("state.generated_parts", " / ".join(made_parts))
         elif made_parts:
-            _set_status("✓ 3D 外层生成完成")
+            _set_status("state.generated")
         else:
-            _set_status("3D 外层已存在，请使用“重建 3D 外层”。")
+            _set_status("state.already_exists")
 
-        self.report(
-            {"INFO"},
-            "3D skin layers ready: %d new object(s), %d layer group(s) already present."
-            % (created, reused),
-        )
+        self.report({"INFO"}, T("report.ready", created, reused))
         return {"FINISHED"}
 
 
@@ -2184,14 +2334,14 @@ class OBJECT_OT_generate_skin_layers_3d(bpy.types.Operator):
 #: :class:`MC3DSL_SceneState`, ``step`` is the index into :data:`_LAYER_STEPS`,
 #: ``label`` is the checkbox text.
 PART_TOGGLES = (
-    ("part_head", 0, "Head"),
-    ("part_body", 1, "Body"),
-    ("part_arms", 3, "Arms"),
-    ("part_legs", 2, "Legs"),
+    ("part_head", 0, "part.head"),
+    ("part_body", 1, "part.body"),
+    ("part_arms", 3, "part.arms"),
+    ("part_legs", 2, "part.legs"),
 )
 
-#: Display label per ``_LAYER_STEPS`` entry, indexed the same way.
-_STEP_LABELS = ("Head", "Body", "Legs", "Arms")
+#: Localisation key per ``_LAYER_STEPS`` entry, indexed the same way.
+_STEP_LABELS = ("part.head", "part.body", "part.legs", "part.arms")
 
 
 def _step_enabled(state, step_index):
@@ -2207,7 +2357,84 @@ def _is_partial(state):
     return any(not bool(getattr(state, prop, True))
                for prop, _idx, _label in PART_TOGGLES)
 
-_STATUS_DEFAULT = "等待操作"
+_STATUS_DEFAULT_KEY = "state.idle"
+
+#: Every status this addon can store.  The scene property holds one of these
+#: language-neutral KEYS - never a translated display string - so a .blend
+#: saved under one language displays correctly when reopened under the other.
+STATUS_KEYS = (
+    "state.idle",
+    "state.generated",
+    "state.generated_parts",
+    "state.rebuilt",
+    "state.removed",
+    "state.nothing_to_remove",
+    "state.already_exists",
+    "state.failed",
+    "state.no_target",
+    "warn.no_skin_layer",
+)
+
+#: Display strings written by older builds, mapped back to the key they came
+#: from so .blend files saved before this change still resolve.  Both the
+#: Chinese and the English spellings of every historical status are listed.
+_LEGACY_STATUS = {
+    # zh (the original hard-coded status text)
+    "\u7b49\u5f85\u64cd\u4f5c": "state.idle",
+    "\u2713 3D \u5916\u5c42\u751f\u6210\u5b8c\u6210": "state.generated",
+    "\u2713 3D \u5916\u5c42\u91cd\u5efa\u5b8c\u6210": "state.rebuilt",
+    "\u2713 3D \u5916\u5c42\u5df2\u5220\u9664": "state.removed",
+    "\u26a0 3D \u5916\u5c42\u751f\u6210\u5931\u8d25": "state.failed",
+    "\u26a0 3D \u5916\u5c42\u751f\u6210\u5931\u8d25\n\u8bf7\u68c0\u67e5\u5f53\u524d\u6a21\u578b\u662f\u5426\u4e3a\u6709\u6548\u7684 MCprep \u73a9\u5bb6\u6a21\u578b\u3002": "state.failed",
+    "\u26a0 \u672a\u68c0\u6d4b\u5230 MCprep \u73a9\u5bb6\u6a21\u578b": "state.no_target",
+    "\u26a0 \u65e0\u6cd5\u627e\u5230 Minecraft Skin Layer": "warn.no_skin_layer",
+    "\u6ca1\u6709\u53ef\u5220\u9664\u7684 3D \u5916\u5c42\u3002": "state.nothing_to_remove",
+    "3D \u5916\u5c42\u5df2\u5b58\u5728\uff0c\u8bf7\u4f7f\u7528\u201c\u91cd\u5efa 3D \u5916\u5c42\u201d\u3002": "state.already_exists",
+    # en (the first English build)
+    "Ready": "state.idle",
+    "\u2713 3D layers generated": "state.generated",
+    "\u2713 3D layers rebuilt": "state.rebuilt",
+    "\u2713 3D layers deleted": "state.removed",
+    "There are no 3D layers to delete.": "state.nothing_to_remove",
+    "3D layers already exist. Use \u201cRebuild 3D Layers\u201d.": "state.already_exists",
+    "\u26a0 No MCprep player model detected": "state.no_target",
+    "\u26a0 Minecraft skin layer not found": "warn.no_skin_layer",
+}
+
+
+def _status_display(value):
+    """Translate a stored status value into the current language.
+
+    Accepts a key, a legacy display string (mapped back to its key), or an
+    unknown/empty value (falls back to the idle status).  Never raises, so an
+    old .blend can always be opened.
+    """
+    try:
+        if not value:
+            return T(_STATUS_DEFAULT_KEY)
+        # "key|arg\u0001arg" form produced by _set_status(key, *args)
+        if "|" in value:
+            key_part, _, arg_part = value.partition("|")
+            if key_part in STATUS_KEYS:
+                args = [a for a in arg_part.split("\u0001") if a != ""]
+                try:
+                    return T(key_part, *args)
+                except Exception:  # noqa: BLE001
+                    return T(key_part)
+        if value in STATUS_KEYS:
+            return T(value)
+        key = _LEGACY_STATUS.get(value)
+        if key is None:
+            # Unknown text (e.g. a status composed with dynamic detail).
+            for legacy, k in _LEGACY_STATUS.items():
+                if legacy and value.startswith(legacy):
+                    key = k
+                    break
+        if key is None:
+            return T(_STATUS_DEFAULT_KEY)
+        return T(key)
+    except Exception:  # noqa: BLE001 - never break the panel
+        return T(_STATUS_DEFAULT_KEY)
 
 #: Reason codes used by :func:`_status_for_selection`.
 _ST_OK = "ok"
@@ -2264,14 +2491,15 @@ def _present_generated_names(rig):
 
 
 def _rig_model_kind(rig):
-    """``"Slim Model"`` or ``"Classic Model"``, inferred from the rig itself.
+    """
+    The MCprep *Simple Player* has 4 MC px arms and the *Simple Player Slim*
+    3 MC px arms, so the Layer1 shell spans 1.60 local units for Simple Player
+    and 1.40 for Simple Player Slim.  Reading that span is how the panel tells
+    them apart - the user never picks the model type by hand, and the detection
+    logic itself is unchanged.
 
-    MCprep builds the Classic torso 8 MC px wide *plus* 4 px arms and the Slim
-    one with 3 px arms, so the Layer1 shell spans 1.60 local units for Classic
-    and 1.40 for Slim.  Reading that span is how the panel tells them apart -
-    the user never picks the model type by hand.
-
-    Returns ``"Unknown Model"`` when it cannot be determined.
+    Returns the localised name of the model, or a localised "unknown" label
+    when it cannot be determined.
     """
     try:
         for name in (rig.layer1_name, rig.layer2_name):
@@ -2284,11 +2512,12 @@ def _rig_model_kind(rig):
             span = max(xs) - min(xs)
             if span <= 0.0:
                 continue
-            # Classic = 1.60, Slim = 1.40 (threshold halfway between).
-            return "Slim Model" if span < 1.5 else "Classic Model"
-        return "Unknown Model"
+            # Standard arms = 1.60 local units, slim arms = 1.40
+            # (threshold halfway between).
+            return T("model.slim") if span < 1.5 else T("model.standard")
+        return T("model.unknown")
     except Exception:  # noqa: BLE001 - purely informational
-        return "Unknown Model"
+        return T("model.unknown")
 
 
 def _status_for_selection(context):
@@ -2319,9 +2548,19 @@ def _scene_state():
     return bpy.context.scene.mc3dsl
 
 
-def _set_status(text):
+def _set_status(key, *args):
+    """Store *key* (never a translated string) as the scene's status.
+
+    Extra *args* are kept by re-deriving the text at draw time, so the stored
+    value stays language-neutral.
+    """
     try:
-        _scene_state().status = text
+        value = key
+        if args:
+            # Keep the dynamic detail, but store it alongside the key so the
+            # panel can re-render it in whatever language is active.
+            value = key + "|" + "\u0001".join(str(a) for a in args)
+        _scene_state().status = value
     except Exception:  # noqa: BLE001 - never break an operator over feedback
         pass
 
@@ -2334,7 +2573,8 @@ class OBJECT_OT_remove_skin_layers_3d(bpy.types.Operator):
     """Remove the generated 3D skin layers for the selected MCprep player"""
 
     bl_idname = "object.remove_skin_layers_3d"
-    bl_label = "删除 3D 外层"
+    bl_label = T("op.remove")
+    bl_description = T("op.remove.desc")
     bl_options = {"REGISTER", "UNDO"}
 
     target_rig: bpy.props.StringProperty(
@@ -2349,8 +2589,8 @@ class OBJECT_OT_remove_skin_layers_3d(bpy.types.Operator):
     def execute(self, context):
         rig = _resolve_target_rig(context, self.target_rig)
         if rig is None:
-            self.report({"ERROR"}, REFUSE_SELECTION_MSG)
-            _set_status("⚠ 未检测到 MCprep 玩家模型")
+            self.report({"ERROR"}, T("report.refuse"))
+            _set_status("state.no_target")
             return {"CANCELLED"}
 
         saved_selection = _capture_selection(context)
@@ -2369,11 +2609,11 @@ class OBJECT_OT_remove_skin_layers_3d(bpy.types.Operator):
             _restore_selection(context, saved_selection)
 
         if removed == 0:
-            _set_status("没有可删除的 3D 外层。")
-            self.report({"INFO"}, "没有可删除的 3D 外层。")
+            _set_status("state.nothing_to_remove")
+            self.report({"INFO"}, T("report.nothing_to_remove"))
         else:
-            _set_status("✓ 3D 外层已删除")
-            self.report({"INFO"}, "✓ 3D 外层已删除 (%d)" % removed)
+            _set_status("state.removed")
+            self.report({"INFO"}, T("report.removed", removed))
         return {"FINISHED"}
 
 
@@ -2381,14 +2621,15 @@ class OBJECT_OT_rebuild_skin_layers_3d(bpy.types.Operator):
     """Delete then regenerate the 3D skin layers for the selected player"""
 
     bl_idname = "object.rebuild_skin_layers_3d"
-    bl_label = "重建 3D 外层"
+    bl_label = T("op.rebuild")
+    bl_description = T("op.rebuild.desc")
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
         rig = _resolve_target_rig(context, "")
         if rig is None:
-            self.report({"ERROR"}, REFUSE_SELECTION_MSG)
-            _set_status("⚠ 未检测到 MCprep 玩家模型")
+            self.report({"ERROR"}, T("report.refuse"))
+            _set_status("state.no_target")
             return {"CANCELLED"}
 
         # Reuse the verified operators rather than duplicating their logic.
@@ -2399,9 +2640,9 @@ class OBJECT_OT_rebuild_skin_layers_3d(bpy.types.Operator):
             return res
         res = bpy.ops.object.generate_skin_layers_3d(target_rig=rig.rig_name)
         if "FINISHED" not in res:
-            _set_status("⚠ 3D 外层生成失败")
+            _set_status("state.failed")
             return res
-        _set_status("✓ 3D 外层重建完成")
+        _set_status("state.rebuilt")
         return {"FINISHED"}
 
 
@@ -2412,12 +2653,18 @@ class OBJECT_OT_rebuild_skin_layers_3d(bpy.types.Operator):
 class MC3DSL_SceneState(bpy.types.PropertyGroup):
     """Per-scene UI state for the panel."""
 
-    part_head: bpy.props.BoolProperty(name="Head", default=True)
-    part_body: bpy.props.BoolProperty(name="Body", default=True)
-    part_arms: bpy.props.BoolProperty(name="Arms", default=True)
-    part_legs: bpy.props.BoolProperty(name="Legs", default=True)
+    # `translation_context` keeps Blender's own zh dictionary from rewriting
+    # these names (e.g. "Head" -> "头部") when the English build is active.
+    part_head: bpy.props.BoolProperty(
+        name=T("part.head"), translation_context=UI_CONTEXT, default=True)
+    part_body: bpy.props.BoolProperty(
+        name=T("part.body"), translation_context=UI_CONTEXT, default=True)
+    part_arms: bpy.props.BoolProperty(
+        name=T("part.arms"), translation_context=UI_CONTEXT, default=True)
+    part_legs: bpy.props.BoolProperty(
+        name=T("part.legs"), translation_context=UI_CONTEXT, default=True)
 
-    status: bpy.props.StringProperty(default=_STATUS_DEFAULT)
+    status: bpy.props.StringProperty(default="")  # empty -> T(_STATUS_DEFAULT_KEY)
 
 
 # ---------------------------------------------------------------------------
@@ -2442,80 +2689,83 @@ class VIEW3D_PT_skin_layers_3d(bpy.types.Panel):
         # ---------------- PLAYER ----------------
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="PLAYER", icon="OUTLINER_OB_ARMATURE")
+        col.label(text=T("panel.player"), icon="OUTLINER_OB_ARMATURE", text_ctxt=UI_CONTEXT)
 
         rig, reason = _status_for_selection(context)
         if rig is not None:
             row = col.row(align=True)
-            row.label(text="✓ " + rig.rig_name, icon="CHECKMARK")
-            col.label(text="  " + _rig_model_kind(rig))
+            row.label(text="✓ " + rig.rig_name, icon="CHECKMARK", text_ctxt=UI_CONTEXT)
+            col.label(text="  " + _rig_model_kind(rig), text_ctxt=UI_CONTEXT)
             n_present = len(_present_generated_names(rig))
-            col.label(text="  3D 外层: %d / 10" % n_present)
+            col.label(text=T("player.layer_count", n_present), text_ctxt=UI_CONTEXT)
         else:
             if reason == _ST_NO_RIGS:
-                col.label(text="⚠ 未检测到 MCprep 玩家模型", icon="ERROR")
-                col.label(text="  请先选中一个 MCprep 玩家模型。")
+                col.label(text=T("warn.no_player"), icon="ERROR", text_ctxt=UI_CONTEXT)
+                col.label(text=T("warn.no_player.hint"), text_ctxt=UI_CONTEXT)
             elif reason == _ST_NO_LAYER2:
-                col.label(text="⚠ 无法找到 Minecraft Skin Layer", icon="ERROR")
-                col.label(text="  请确认该玩家模型由 MCprep 正常生成。")
+                col.label(text=T("warn.no_skin_layer"), icon="ERROR", text_ctxt=UI_CONTEXT)
+                col.label(text=T("warn.no_skin_layer.hint"), text_ctxt=UI_CONTEXT)
             elif reason == _ST_NOT_PLAYER:
-                col.label(text="⚠ 当前对象不是 MCprep 玩家模型", icon="ERROR")
-                col.label(text="  请选择由 MCprep 创建的玩家模型。")
+                col.label(text=T("warn.not_player"), icon="ERROR", text_ctxt=UI_CONTEXT)
+                col.label(text=T("warn.not_player.hint"), text_ctxt=UI_CONTEXT)
             else:
-                col.label(text="⚠ 未检测到 MCprep 玩家模型", icon="ERROR")
-                col.label(text="  请先选中一个 MCprep 玩家模型。")
+                col.label(text=T("warn.no_player"), icon="ERROR", text_ctxt=UI_CONTEXT)
+                col.label(text=T("warn.no_player.hint"), text_ctxt=UI_CONTEXT)
 
         enabled = rig is not None
 
         # ---------------- 3D SKIN LAYERS ----------------
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="3D SKIN LAYERS", icon="MOD_BUILD")
+        col.label(text=T("panel.layers"), icon="MOD_BUILD", text_ctxt=UI_CONTEXT)
 
         col.scale_y = 1.4
         col.operator(
             OBJECT_OT_generate_skin_layers_3d.bl_idname,
-            text="生成 3D 外层",
+            text=T("op.generate"),
             icon="MESH_CUBE",
+        text_ctxt=UI_CONTEXT,
         )
         col.scale_y = 1.0
 
         col.separator()
-        col.label(text="BODY PARTS")
+        col.label(text=T("panel.parts"), text_ctxt=UI_CONTEXT)
         state = _scene_state()
         flow = col.column(align=True)
         flow.enabled = enabled
         for prop, _step, label in PART_TOGGLES:
-            flow.prop(state, prop, text=label, toggle=True)
+            flow.prop(state, prop, text=T(label), toggle=True, text_ctxt=UI_CONTEXT)
 
         col.separator()
         row = col.row(align=True)
         row.enabled = enabled
         row.operator(
             OBJECT_OT_remove_skin_layers_3d.bl_idname,
-            text="删除 3D 外层",
+            text=T("op.remove"),
             icon="TRASH",
+        text_ctxt=UI_CONTEXT,
         )
         row.operator(
             OBJECT_OT_rebuild_skin_layers_3d.bl_idname,
-            text="重建 3D 外层",
+            text=T("op.rebuild"),
             icon="FILE_REFRESH",
+        text_ctxt=UI_CONTEXT,
         )
 
         # ---------------- STATUS ----------------
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="STATUS", icon="INFO")
-        col.label(text=state.status)
+        col.label(text=T("panel.status"), icon="INFO", text_ctxt=UI_CONTEXT)
+        col.label(text=_status_display(state.status), text_ctxt=UI_CONTEXT)
 
         # ---------------- ABOUT ----------------
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="ABOUT", icon="QUESTION")
-        col.label(text=ADDON_TITLE_SHORT)
-        col.label(text=ADDON_TITLE_SUB)
-        col.label(text=ADDON_VERSION_TEXT)
-        col.label(text="GitHub repository")
+        col.label(text=T("panel.about"), icon="QUESTION", text_ctxt=UI_CONTEXT)
+        col.label(text=ADDON_TITLE_SHORT, text_ctxt=UI_CONTEXT)
+        col.label(text=ADDON_TITLE_SUB, text_ctxt=UI_CONTEXT)
+        col.label(text=ADDON_VERSION_TEXT, text_ctxt=UI_CONTEXT)
+        col.label(text="GitHub repository", text_ctxt=UI_CONTEXT)
 
 
 # ---------------------------------------------------------------------------
@@ -2549,6 +2799,11 @@ def _icon_dir():
 def _register_icon():
     """Best-effort load of icons/logo.png. Never fatal.
 
+    ``bpy.utils.previews`` is a submodule that Blender does not import until
+    something asks for it, so it must be imported explicitly here - touching
+    ``bpy.utils.previews`` first would raise AttributeError on a factory
+    startup, where no other add-on has imported it yet.
+
     Blender only accepts square thumbnails for preview icons; anything odd
     simply means the panel falls back to a stock icon.
     """
@@ -2556,9 +2811,8 @@ def _register_icon():
     try:
         if not os.path.exists(path):
             return False
-        bpy.utils.previews.new  # noqa: B018 - feature probe
-        from bpy.utils import previews as _previews  # noqa: PLC0415
-        pcoll = _previews.new()
+        from bpy.utils import previews  # noqa: PLC0415 - lazy submodule
+        pcoll = previews.new()
         pcoll.load(_ICON_ID, path, "IMAGE")
         _ICON_COLLECTIONS[_ICON_ID] = pcoll
         return True
