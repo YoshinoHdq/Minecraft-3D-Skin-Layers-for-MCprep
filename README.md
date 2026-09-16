@@ -1,106 +1,108 @@
 <p align="center">
-  <img src="head_3d_skin_layer/icons/logo.png" alt="Minecraft 3D Skin Layers for MCprep" width="220">
+  <img src="head_3d_skin_layer/icons/logo.png" alt="Minecraft 3D Skin Layers for MCprep" width="200">
 </p>
 
-<h1 align="center">Minecraft 3D Skin Layers for MCprep</h1>
+# Minecraft 3D Skin Layers for MCprep
 
-<p align="center">
-  <strong>A Blender add-on that generates Minecraft-style 3D skin layers for MCprep player models.</strong><br>
-  Version 1.0.0 &nbsp;·&nbsp; Blender 5.2.0+
-</p>
+[English](README_en.md)
+
+> 一个 Blender 插件，为 MCprep 生成的 Minecraft 玩家模型添加可渲染的 3D 外层皮肤。
+
+外层皮肤会根据皮肤纹理生成真正的体素化 3D 几何体，而不是简单地复制或加厚原有的 Layer2 外壳。
 
 ---
 
-## Overview
+## 功能
 
-**Minecraft 3D Skin Layers for MCprep** is a third-party Blender add-on that builds a genuine
-per-pixel voxelised 3D second skin layer on top of an MCprep Minecraft player model — the Blender
-equivalent of the Minecraft Java mod *3D Skin Layers*.
+- 根据皮肤纹理生成真正的 3D 外层皮肤几何体
+- 支持 MCprep 的 **Simple Player** 模型
+- 支持 MCprep 的 **Simple Player Slim** 模型（自动识别）
+- 自动识别当前选中的玩家模型
+- 可分别控制 **头部 / 身体 / 手臂 / 腿部**
+- 支持 **生成 / 重建 / 删除** 3D 外层
+- 支持带透明区域的皮肤
+- 支持同一场景中的多个玩家模型，各自独立处理
+- **非破坏性**：不修改 MCprep 原有的 Layer1 / Layer2、骨架、材质与皮肤图片
 
-One small cube is emitted per opaque skin texel, and the faces hidden between neighbouring cubes are
-culled. The result is a real voxel shell that follows the rig, not a duplicated or solidified copy of
-MCprep's own Layer2 mesh.
+---
 
-> This is an **independent, third-party add-on**. It is not an official Minecraft, Mojang, or MCprep
-> product, and it is not affiliated with or endorsed by them.
+## 安装
 
-## Features
+1. 前往 [Releases](../../releases) 下载中文版安装包 `minecraft_3d_skin_layers-v1.0.0_zh.zip`
+2. 打开 Blender
+3. 进入 **Edit → Preferences → Add-ons**
+4. 点击 **Install…**
+5. 选择刚下载的 `minecraft_3d_skin_layers-v1.0.0_zh.zip`
+6. 在列表中启用 **Minecraft 3D Skin Layers for MCprep**
 
-- Minecraft-style 3D skin layers generated from the skin texture
-- MCprep player model support
-- Support for the **Simple Player** and **Simple Player Slim** player models from MCprep
-- Simple Player Slim, which has narrower arms, is detected automatically
-- Transparent skin support — transparent texels produce no geometry
-- Automatic player detection from the current selection
-- Head / Body / Arms / Legs control — generate just the parts you need
-- Rebuild generated layers
-- Delete generated layers
-- Selection-aware generation — only the selected player is affected
-- Support for duplicated rigs (`SimplePlayer.001`, `SimplePlayer.002`, …)
-- Non-destructive: MCprep's Layer1 / Layer2 / armature / materials / images are never modified
-- Status feedback and user-friendly error messages
+> 请不要下载 GitHub 自动生成的 "Source code" ZIP —— 那个无法直接安装。
 
-## Requirements
+---
 
-- **Blender 5.2.0** or newer
-- **MCprep** add-on
-- An MCprep-generated Minecraft player model
+## 使用
 
-## Installation
+1. 使用 MCprep 创建 Minecraft 玩家模型
+2. 选中该玩家模型，或它的任意部件
+3. 在 3D Viewport 中按 **N** 打开侧边栏
+4. 打开 **MC 3D Skin Layers** 标签页
+5. 按需勾选 **Head / Body / Arms / Legs**
+6. 点击 **生成 3D 外层**
 
-1. Open Blender.
-2. Go to **Edit → Preferences → Add-ons**.
-3. Click **Install…** and select `minecraft_3d_skin_layers-v1.0.0.zip`.
-4. Enable the add-on **Minecraft 3D Skin Layers for MCprep** in the list.
+三个按钮的作用：
 
-## Usage
+| 按钮 | 作用 |
+| --- | --- |
+| **生成 3D 外层** | 创建尚未生成的部分，已有的部分保持不变 |
+| **重建 3D 外层** | 先删除本插件生成的外层，再按当前勾选重新生成 |
+| **删除 3D 外层** | 只删除本插件生成的外层 |
 
-1. Use **MCprep** to create a Minecraft player model in your scene.
-2. Select the player model (or any of its parts).
-3. Open the 3D Viewport sidebar with **N**.
-4. Open the **MC 3D Skin Layers** tab.
-5. Click **生成 3D 外层** (Generate 3D Skin Layers).
+**插件只处理当前选中的玩家模型**，不会影响场景中的其他角色。
 
-The add-on detects the selected player automatically and generates the 3D layers for it. If the same
-model is on screen more than once, only the player you selected is affected.
+---
 
-## Body Parts
+## 支持的模型
 
-The **BODY PARTS** toggles let you choose which layers to build:
+目前支持 MCprep 的：
 
-| Part | Default |
-|------|---------|
-| Head | enabled |
-| Body | enabled |
-| Arms | enabled |
-| Legs | enabled |
+- **Simple Player**
+- **Simple Player Slim**
 
-All four are enabled by default. Turning one off simply skips that part — the others are untouched.
+**Simple Player Slim** 会自动识别，无需手动选择模型类型。
 
-- **生成 3D 外层** — build the layers that are missing
-- **重建 3D 外层** — remove this player's generated layers and build them again
-- **删除 3D 外层** — remove this player's generated layers only
+---
 
-Deleting removes only the objects this add-on created. MCprep's Layer1 / Layer2 meshes, the armature,
-the materials and the skin images are never touched.
+## 兼容性与限制
 
-## Compatibility
+- **Blender 5.2.0** 或更高版本
+- 需要安装 **MCprep**
+- 目前只针对 **MCprep 生成的玩家模型**进行测试
+- 其他 Minecraft 模型导入器或手动搭建的 Minecraft 人物模型**目前不在支持范围内**
 
-Designed for **MCprep-generated Minecraft player models** — the **Simple Player** and
-**Simple Player Slim** models.
+---
 
-Only MCprep player models have been tested. Other Minecraft model importers or manually assembled
-blocky models are not supported.
+## 下载
 
-## Version
+请前往 [Releases](../../releases) 页面下载：
 
-v1.0.0
+| 语言 | 文件 |
+| --- | --- |
+| 中文界面 | `minecraft_3d_skin_layers-v1.0.0_zh.zip` |
+| English UI | `minecraft_3d_skin_layers-v1.0.0_en.zip` |
+
+两个安装包功能完全一致，仅用户界面语言不同。
+
+---
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+本项目采用 MIT License，详见 [LICENSE](LICENSE)。
+
+---
 
 ## Credits
 
-Developed by Yoshino. The voxel algorithm follows the Minecraft Java mod *3D Skin Layers*
-(`skinlayers3d`).
+Developed by Yoshino.
+
+外层皮肤的体素化算法思路参考 Minecraft Java 模组 **3D Skin Layers**（`skinlayers3d`）。
+
+本项目为独立的第三方 Blender 插件，与 Mojang、Microsoft 或 MCprep 官方无关联，也未获得其官方认可。
