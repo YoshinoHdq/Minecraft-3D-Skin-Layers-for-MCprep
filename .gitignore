@@ -1,0 +1,37 @@
+# Byte-compiled / optimized Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Blender backups
+*.blend1
+*.blend2
+*.blend3
+*.blend[0-9]
+
+# Blender crash / autosave leftovers
+*.blend@
+*.crash.txt
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Local addon backups (development only)
+__init__.py.before_*
+
+# Release ZIPs are uploaded as GitHub Release assets, not committed
+minecraft_3d_skin_layers-v*.zip
